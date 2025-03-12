@@ -1,5 +1,5 @@
 {
-  "name": "eslint-plugin-class-member-oninit",
+  "name": "eslint-plugin-ui5-property-init-in-oninit",
   "version": "1.0.0",
   "description": "Ensure class properties are initialized at declaration or in onInit method or through functions called by onInit, unless marked as optional",
   "main": "index.js",
