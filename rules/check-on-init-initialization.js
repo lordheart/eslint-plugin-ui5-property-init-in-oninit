@@ -20,6 +20,7 @@ module.exports = {
           statement.type === "ExpressionStatement" &&
           statement.expression.type === "AssignmentExpression" &&
           statement.expression.left.type === "MemberExpression" &&
+          statement.expression.left.object.type === "ThisExpression" &&
           statement.expression.left.property.name === propertyName
       );
     }
@@ -44,7 +45,6 @@ module.exports = {
       statements,
       checkedFunctions = new Set()
     ) {
-      const sourceCode = context.sourceCode ?? context.getSourceCode();
       for (const statement of statements) {
         if (
           statement.type === "ExpressionStatement" &&
@@ -65,10 +65,8 @@ module.exports = {
               const functionNode = getFunctionNode(functionName, scope);
               if (functionNode) {
                 const functionStatements = functionNode.value.body.body;
-                if (isPropertyInitialized(property, functionStatements)) {
-                  return true;
-                }
                 if (
+                  isPropertyInitialized(property, functionStatements) ||
                   checkFunctionCalls(
                     property,
                     functionStatements,
@@ -90,17 +88,14 @@ module.exports = {
         if (node.key.name === "onInit") {
           const classBody = node.parent && node.parent.body;
           if (!classBody) {
-            console.log(classBody);
             return;
           }
 
-          const properties = classBody.filter((member) => {
-            console.log(member.type);
-            return member.type === "PropertyDefinition";
-          });
+          const properties = classBody.filter(
+            (member) => member.type === "PropertyDefinition"
+          );
 
           properties.forEach((property) => {
-            console.log(property);
             const propertyName = property.key.name;
             const isOptional = property.optional;
             const isInitializedAtDeclaration = property.value !== null;
