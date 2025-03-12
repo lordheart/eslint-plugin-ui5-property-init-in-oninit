@@ -1,6 +1,7 @@
-// eslint-plugin-class-member-oninit/tests/check-on-init-initialization.test.js
 const { RuleTester } = require("eslint");
 const rule = require("../rules/check-on-init-initialization");
+const fs = require("fs");
+const path = require("path");
 
 const ruleTester = new RuleTester({
   parser: require.resolve("@typescript-eslint/parser"),
@@ -10,68 +11,55 @@ const ruleTester = new RuleTester({
   },
 });
 
+function readFile(filePath) {
+  return fs
+    .readFileSync(path.resolve(__dirname, filePath), "utf-8")
+    .replace(/\r/g, "");
+}
+
 ruleTester.run("check-on-init-initialization", rule, {
   valid: [
     {
-      code: `
-        class MyController extends sap.ui.core.mvc.Controller {
-          private myVariable: string = "Initialized";
-
-          public onInit(): void {
-            // Initialization logic
-          }
-        }
-      `,
+      name: "Initialization at declaration (need to check if ui5 actually allows this)",
+      code: readFile("./valid/valid1.ts"),
     },
     {
-      code: `
-        class MyController extends sap.ui.core.mvc.Controller {
-          private myVariable?: string;
-
-          public onInit(): void {
-            // Initialization logic
-          }
-        }
-      `,
+      name: "Optional property (not required)",
+      code: readFile("./valid/valid2.ts"),
     },
     {
-      code: `
-        class MyController extends sap.ui.core.mvc.Controller {
-          private myVariable: string;
-
-          public onInit(): void {
-            this.myVariable = "Initialized";
-          }
-        }
-      `,
+      name: "Initialization in onInit method",
+      code: readFile("./valid/valid3.ts"),
     },
     {
-      code: `
-        class MyController extends sap.ui.core.mvc.Controller {
-          private myVariable: string;
-
-          public onInit(): void {
-            this.initializeVariable();
-          }
-
-          private initializeVariable(): void {
-            this.myVariable = "Initialized";
-          }
-        }
-      `,
+      name: "Initialization through function called by onInit",
+      code: readFile("./valid/valid4.ts"),
     },
   ],
   invalid: [
     {
-      code: `
-        class MyController extends sap.ui.core.mvc.Controller {
-          private myVariable: string;
-
-          public onInit(): void {
-            // Initialization logic
-          }
-        }
-      `,
+      name: "Missing initialization",
+      code: readFile("./invalid/invalid1.ts"),
+      errors: [
+        {
+          message:
+            "Property 'myVariable' is not initialized at declaration, in onInit method, or through functions called by onInit",
+        },
+      ],
+    },
+    {
+      name: "Initialized of same name in subobject (incorrect initialization)",
+      code: readFile("./invalid/invalid2.ts"),
+      errors: [
+        {
+          message:
+            "Property 'myVariable' is not initialized at declaration, in onInit method, or through functions called by onInit",
+        },
+      ],
+    },
+    {
+      name: "Initialization in a function not called by onInit",
+      code: readFile("./invalid/invalid3.ts"),
       errors: [
         {
           message:
